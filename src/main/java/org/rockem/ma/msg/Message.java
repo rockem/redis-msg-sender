@@ -5,7 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 
 @Data
-public class EchoMessage {
+public class Message {
 
     @NotNull
     private String message;
