@@ -5,12 +5,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("/echoes")
 public class EchoesController {
 
     @RequestMapping
-    public ResponseEntity<?> echo(@RequestBody EchoMessage message) {
-        return ResponseEntity.badRequest().build();
+    public ResponseEntity<?> echo(@Valid @RequestBody EchoMessage message) {
+        return null;
     }
 }

@@ -2,7 +2,8 @@ package e2e.org.rockem.ma.msg;
 
 import org.junit.Test;
 
-import java.util.Date;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 
 public class MsgSenderE2ETests {
 
@@ -13,7 +14,8 @@ public class MsgSenderE2ETests {
     @Test
     public void failOnRequestWithPastTime() throws Exception {
         app.start();
-        app.echoAtTime("kuku", new Date().getTime() - SECOND);
+        app.echoAtTime("kuku", LocalDateTime.now().minus(1, ChronoUnit.SECONDS).toEpochSecond(ZoneOffset.UTC));
         app.receivedUserError();
     }
+
 }
