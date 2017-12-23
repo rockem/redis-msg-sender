@@ -3,13 +3,12 @@ package org.rockem.ma.msg.repository.redis;
 import org.rockem.ma.msg.Message;
 import org.rockem.ma.msg.TimeProvider;
 import org.rockem.ma.msg.repository.MessagesRepository;
+import org.rockem.ma.msg.repository.PendingMessages;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Consumer;
 
 @Service
 public class JedisMessagesRepository implements MessagesRepository {
@@ -30,19 +29,27 @@ public class JedisMessagesRepository implements MessagesRepository {
     }
 
     @Override
-    public Iterable<Message> getPendingMessages() {
-        ArrayList<Message> messages = new ArrayList<>();
+    public PendingMessages getPendingMessages() {
         Set<String> mlog = jedis.zrangeByScore(LOG_KEY, 0, timeProvider.now());
-        mlog.forEach(l -> messages.addAll(allMessagesIn(l)));
-        return messages;
+        return new RedisPendingMessages(mlog);
     }
 
-    private List<Message> allMessagesIn(String time) {
-        List<Message> messages = new ArrayList<>();
-        String m;
-        while((m = jedis.spop(time)) != null) {
-            messages.add(new Message(m, Long.valueOf(time)));
+    public class RedisPendingMessages implements PendingMessages {
+
+        private final Set<String> keys;
+
+        public RedisPendingMessages(Set<String> keys) {
+            this.keys = keys;
         }
-        return messages;
+
+        @Override
+        public void forEach(Consumer<Message> action) {
+            keys.forEach(k -> {
+                String msg;
+                while((msg = jedis.spop(k)) != null) {
+                    action.accept(new Message(msg, Long.valueOf(k)));
+                }
+            });
+        }
     }
 }

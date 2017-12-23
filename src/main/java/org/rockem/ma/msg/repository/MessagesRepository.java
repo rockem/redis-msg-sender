@@ -6,5 +6,5 @@ public interface MessagesRepository {
 
     void save(Message message);
 
-    Iterable<Message> getPendingMessages();
+    PendingMessages getPendingMessages();
 }

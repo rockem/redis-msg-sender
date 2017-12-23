@@ -4,15 +4,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.rockem.ma.msg.Message;
 import org.rockem.ma.msg.TimeProvider;
+import org.rockem.ma.msg.repository.PendingMessages;
 import org.rockem.ma.msg.repository.redis.JedisMessagesRepository;
 import redis.clients.jedis.Jedis;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
-import static org.hamcrest.collection.IsIterableWithSize.iterableWithSize;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -50,30 +53,37 @@ public class JedisMessagesRepositoryTest {
 
     @Test
     public void noSavedMessages() throws Exception {
-        assertThat(repository.getPendingMessages(), iterableWithSize(0));
+        assertThat(toList(repository.getPendingMessages()), empty());
+    }
+
+    private List<Message> toList(PendingMessages pendingMessages) {
+        List<Message> messages = new ArrayList<>();
+        pendingMessages.forEach(messages::add);
+        return messages;
     }
 
     @Test
     public void noRelevantMessagesForNow() throws Exception {
         repository.save(new Message("popov", 150));
-        assertThat(repository.getPendingMessages(), iterableWithSize(0));
+        assertThat(toList(repository.getPendingMessages()), empty());
     }
 
     @Test
     public void retrievePendingMessages() throws Exception {
         repository.save(new Message("popov", 90));
         repository.save(new Message("popov", 61));
-        assertThat(repository.getPendingMessages(), containsInAnyOrder(
+        assertThat(toList(repository.getPendingMessages()), hasItems(
                 new Message("popov", 90), new Message("popov", 61)));
     }
 
     @Test
-    public void retrieveOnlyUprocessedMessages() throws Exception {
-        repository.save(new Message("popov", 90));
+    public void retrieveOnlyUnprocessedMessages() throws Exception {
+        repository.save(new Message("kuku", 90));
         repository.save(new Message("popov", 61));
         fetchMessageFrom(90);
-        assertThat(repository.getPendingMessages(), iterableWithSize(1));
-        assertThat(repository.getPendingMessages(), not(containsInAnyOrder(new Message("popov", 90))));
+        List<Message> messages = toList(repository.getPendingMessages());
+        assertThat(messages, hasSize(1));
+        assertThat(messages, hasItems(new Message("popov", 61)));
     }
 
     private void fetchMessageFrom(long time) {
@@ -84,7 +94,15 @@ public class JedisMessagesRepositoryTest {
     public void retrieveMultipleMessagesForTheSameTime() throws Exception {
         repository.save(new Message("kuku", 90));
         repository.save(new Message("popov", 90));
-        assertThat(repository.getPendingMessages(), containsInAnyOrder(
+        assertThat(toList(repository.getPendingMessages()), hasItems(
                 new Message("kuku", 90), new Message("popov", 90)));
+    }
+
+    @Test
+    public void skipOnJustProcessedMessages() throws Exception {
+        repository.save(new Message("popov", 33));
+        PendingMessages messages = repository.getPendingMessages();
+        fetchMessageFrom(33);
+        assertThat(toList(messages), empty());
     }
 }

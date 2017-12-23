@@ -5,12 +5,15 @@ import org.junit.Test;
 import org.rockem.ma.msg.Message;
 import org.rockem.ma.msg.MessagePrinter;
 import org.rockem.ma.msg.repository.MessagesRepository;
+import org.rockem.ma.msg.repository.PendingMessages;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.core.Is.is;
@@ -35,14 +38,14 @@ public class MessagePrinterTest {
 
     @Test
     public void doNothingWhenNoPendingMessages() throws Exception {
-        when(messageRepository.getPendingMessages()).thenReturn(new ArrayList<>());
+        when(messageRepository.getPendingMessages()).thenReturn(new PendingMessagesStub(new ArrayList<>()));
         printer.print();
         assertThat(baos.toString(), isEmptyString());
     }
 
     @Test
     public void shouldPrintPendingMessages() throws Exception {
-        when(messageRepository.getPendingMessages()).thenReturn(MESSAGES);
+        when(messageRepository.getPendingMessages()).thenReturn(new PendingMessagesStub(MESSAGES));
         printer.print();
         assertThat(baos.toString(), is(printedMessages()));
     }
@@ -53,5 +56,19 @@ public class MessagePrinterTest {
             sb.append(m.getTime()).append(":").append(m.getMessage()).append('\n');
         }
         return sb.toString();
+    }
+
+    private class PendingMessagesStub implements PendingMessages {
+
+        private final List<Message> messages;
+
+        public PendingMessagesStub(List<Message> messages) {
+            this.messages = messages;
+        }
+
+        @Override
+        public void forEach(Consumer<Message> action) {
+            messages.forEach(action);
+        }
     }
 }
