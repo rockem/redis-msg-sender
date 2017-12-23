@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -21,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static java.lang.String.format;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -35,9 +37,16 @@ public class AppDriver {
     private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
 
-    public void start() {
+    public void start() throws Exception {
         Application.main();
+        waitForAppToFinishStarting();
         System.setOut(new PrintStream(baos));
+    }
+
+    private void waitForAppToFinishStarting() throws IOException, InterruptedException {
+        while(httpClient.execute(new HttpGet(format("%s/health", APP_DOMAIN))).getStatusLine().getStatusCode() != 200) {
+            Thread.sleep(100);
+        }
     }
 
     public void echoAtTime(String msg, long time) throws IOException {
@@ -45,6 +54,7 @@ public class AppDriver {
         HttpPost post = new HttpPost(APP_DOMAIN + "/echoes");
         post.setEntity(new StringEntity(createMsgRequestFrom(msg, time), ContentType.APPLICATION_JSON));
         lastResponse = httpClient.execute(post);
+        post.releaseConnection();
     }
 
     private String createMsgRequestFrom(String msg, long time) {
@@ -63,16 +73,13 @@ public class AppDriver {
     private void assertPrinterMessage(String message, long at) {
         String stdOut = baos.toString();
         assertFalse(stdOut.isEmpty());
-        String[] output = stdOut.split(":");assertTrue(utcTimeOf(Long.parseLong(output[0])).isAfter(utcTimeOf(at)));
-        assertThat(output[1], is(message));
-    }
-
-    private LocalDateTime utcTimeOf(long s) {
-        return LocalDateTime.ofEpochSecond(s, 0, ZoneOffset.UTC);
+        String[] output = stdOut.split(":");
+        assertTrue(Long.parseLong(output[0]) <= at);
+        assertThat(output[1].trim(), is(message));
     }
 
     public void waitUntil(long seconds) {
-        long timeToWait = Instant.now(Clock.systemUTC()).minus(seconds, ChronoUnit.SECONDS).toEpochMilli() + 2000;
+        long timeToWait = seconds - Instant.now(Clock.systemUTC()).getEpochSecond() + 2;
         final Object o = new Object();
         TimerTask tt = new TimerTask() {
             public void run() {
@@ -82,7 +89,7 @@ public class AppDriver {
             }
         };
         Timer t = new Timer();
-        t.schedule(tt, timeToWait);
+        t.schedule(tt, timeToWait * 1000);
         synchronized(o) {
             try {
                 o.wait();

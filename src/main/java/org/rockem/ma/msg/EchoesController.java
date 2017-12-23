@@ -1,9 +1,11 @@
 package org.rockem.ma.msg;
 
+import org.rockem.ma.msg.repository.MessagesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
@@ -19,7 +21,7 @@ public class EchoesController {
         this.messageRepository = messageRepository;
     }
 
-    @RequestMapping
+    @RequestMapping(method = RequestMethod.POST)
     public void echo(@Valid @RequestBody Message message) {
         messageRepository.save(message);
     }
