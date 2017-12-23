@@ -1,4 +1,4 @@
-package org.rockem.ma.msg;
+package org.rockem.ma.msg.time;
 
 public interface TimeProvider {
 

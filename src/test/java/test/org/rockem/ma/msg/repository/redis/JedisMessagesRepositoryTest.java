@@ -4,7 +4,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.rockem.ma.msg.Message;
-import org.rockem.ma.msg.TimeProvider;
+import org.rockem.ma.msg.time.TimeProvider;
 import org.rockem.ma.msg.repository.PendingMessages;
 import org.rockem.ma.msg.repository.redis.JedisMessagesRepository;
 import redis.clients.jedis.Jedis;

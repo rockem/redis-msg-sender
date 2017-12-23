@@ -1,4 +1,4 @@
-package org.rockem.ma.msg;
+package org.rockem.ma.msg.validator;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;

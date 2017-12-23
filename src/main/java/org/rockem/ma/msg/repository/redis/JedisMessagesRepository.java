@@ -1,7 +1,7 @@
 package org.rockem.ma.msg.repository.redis;
 
 import org.rockem.ma.msg.Message;
-import org.rockem.ma.msg.TimeProvider;
+import org.rockem.ma.msg.time.TimeProvider;
 import org.rockem.ma.msg.repository.MessagesRepository;
 import org.rockem.ma.msg.repository.PendingMessages;
 import org.springframework.stereotype.Service;

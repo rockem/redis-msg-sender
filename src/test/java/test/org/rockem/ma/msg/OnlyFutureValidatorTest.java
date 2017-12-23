@@ -1,7 +1,7 @@
 package test.org.rockem.ma.msg;
 
 import org.junit.Test;
-import org.rockem.ma.msg.OnlyFutureValidator;
+import org.rockem.ma.msg.validator.OnlyFutureValidator;
 
 import javax.validation.ConstraintValidatorContext;
 import java.time.Clock;

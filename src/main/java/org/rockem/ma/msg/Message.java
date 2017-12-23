@@ -1,6 +1,7 @@
 package org.rockem.ma.msg;
 
 import lombok.*;
+import org.rockem.ma.msg.validator.OnlyFuture;
 
 import javax.validation.constraints.NotNull;
 
