@@ -1,6 +1,7 @@
 package test.org.rockem.ma.msg.repository.redis;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.rockem.ma.msg.Message;
 import org.rockem.ma.msg.TimeProvider;
@@ -8,7 +9,6 @@ import org.rockem.ma.msg.repository.PendingMessages;
 import org.rockem.ma.msg.repository.redis.JedisMessagesRepository;
 import redis.clients.jedis.Jedis;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -114,6 +114,10 @@ public class JedisMessagesRepositoryTest {
         assertThat(jedis.zrangeByScore(LOG_KEY, 33, 33), empty());
     }
 
+    /**
+     * This feature can create an infinite loop problem and therefore has been removed
+     */
+    @Ignore
     @Test
     public void restoreMsgIfIFailedToProcessIt() throws Exception {
         repository.save(new Message("popov", 33));
@@ -123,5 +127,4 @@ public class JedisMessagesRepositoryTest {
         assertThat(jedis.spop("33"), is("popov"));
     }
 
-    
 }

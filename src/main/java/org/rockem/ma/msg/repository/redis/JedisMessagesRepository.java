@@ -46,19 +46,15 @@ public class JedisMessagesRepository implements MessagesRepository {
         @Override
         public void forEach(Consumer<Message> action) {
             keys.forEach(key -> {
-                String msg;
-                while((msg = jedis.spop(key)) != null) {
-                    handleMessage(action, key, msg);
-                }
+                dispatchMessagesForKey(action, key);
                 removeLogFor(key);
             });
         }
 
-        private void handleMessage(Consumer<Message> action, String key, String message) {
-            try {
-                action.accept(new Message(message, Long.valueOf(key)));
-            } catch(Throwable e) {
-                jedis.sadd(key, message);
+        private void dispatchMessagesForKey(Consumer<Message> action, String key) {
+            String msg;
+            while((msg = jedis.spop(key)) != null) {
+                action.accept(new Message(msg, Long.valueOf(key)));
             }
         }
 

@@ -1,4 +1,4 @@
-package e2e.org.rockem.ma.msg;
+package e2e.org.rockem.ma.msg.support;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
