@@ -8,6 +8,7 @@ import org.rockem.ma.msg.repository.PendingMessages;
 import org.rockem.ma.msg.repository.redis.JedisMessagesRepository;
 import redis.clients.jedis.Jedis;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -105,4 +106,22 @@ public class JedisMessagesRepositoryTest {
         fetchMessageFrom(33);
         assertThat(toList(messages), empty());
     }
+
+    @Test
+    public void deleteLogEntryWhenNoMessagesForTime() throws Exception {
+        repository.save(new Message("popov", 33));
+        toList(repository.getPendingMessages());
+        assertThat(jedis.zrangeByScore(LOG_KEY, 33, 33), empty());
+    }
+
+    @Test
+    public void restoreMsgIfIFailedToProcessIt() throws Exception {
+        repository.save(new Message("popov", 33));
+        repository.getPendingMessages().forEach(m -> {
+            throw new RuntimeException();
+        });
+        assertThat(jedis.spop("33"), is("popov"));
+    }
+
+    
 }

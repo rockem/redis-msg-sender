@@ -6,6 +6,7 @@ import org.rockem.ma.msg.repository.MessagesRepository;
 import org.rockem.ma.msg.repository.PendingMessages;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Transaction;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -44,12 +45,28 @@ public class JedisMessagesRepository implements MessagesRepository {
 
         @Override
         public void forEach(Consumer<Message> action) {
-            keys.forEach(k -> {
+            keys.forEach(key -> {
                 String msg;
-                while((msg = jedis.spop(k)) != null) {
-                    action.accept(new Message(msg, Long.valueOf(k)));
+                while((msg = jedis.spop(key)) != null) {
+                    handleMessage(action, key, msg);
                 }
+                removeLogFor(key);
             });
+        }
+
+        private void handleMessage(Consumer<Message> action, String key, String message) {
+            try {
+                action.accept(new Message(message, Long.valueOf(key)));
+            } catch(Throwable e) {
+                jedis.sadd(key, message);
+            }
+        }
+
+        private void removeLogFor(String key) {
+            jedis.watch(key);
+            Transaction t = jedis.multi();
+            t.zrem(LOG_KEY, key);
+            t.exec();
         }
     }
 }
